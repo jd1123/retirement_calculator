@@ -85,6 +85,7 @@ class pathOnPortfolio():
         return self.path_dict[key]['EOY_taxable_balance'] + self.path_dict[key]['EOY_non_taxable_balance']
     
     def run_calc(self):
+        # this can use a refactor....BIGTIME
         plan_dict = {}
         plan_dict[self.now] = {'age' : self.age,
              'SOY_taxable_balance': self.taxable_balance,
@@ -111,7 +112,6 @@ class pathOnPortfolio():
             else:
                 expenses = 0
             
-            
             taxable_contrib = 0
             non_taxable_contrib = 0
             
@@ -122,15 +122,17 @@ class pathOnPortfolio():
                 taxable_contrib = 0
                 non_taxable_contrib = 0
                 
-            
+            # this logic needs work ->
+            # how to determine which account to deduce from? and what to do with the account when it runs out?
             if SOY_taxable_balance >= 0:
                 taxable_returns = SOY_taxable_balance*(rate_of_return)*(1-self.returns_tax_rate)
                 EOY_taxable_balance = SOY_taxable_balance + taxable_returns + taxable_contrib
             
+            # this logic needs work ->
+            # how to determine which account to deduce from? and what to do with the account when it runs out?
             if SOY_non_taxable_balance >= 0:
                 non_taxable_returns = (1+rate_of_return)
                 EOY_non_taxable_balance = SOY_non_taxable_balance*(1+rate_of_return) + non_taxable_contrib
-            
             else:
                 EOY_non_taxable_balance=0
             
@@ -190,8 +192,10 @@ class simData():
         return (sims, full_sims)
     
     #this function runs REALLY slowly - i dont know why.
-    def transform_sim_data(self, sims):
+    def transform_sim_data(self, mean, stdev):
+        self.mean = mean
+        self.stdev = stdev
         transformed_sims = []
-        for s in sims:
-                transformed_sims.append([norm.ppf(i, loc=self.mean, scale=self.stdev) for i in s])
-        return transformed_sims
+        for s in self.raw_sims:
+                transformed_sims.append([norm.ppf(i, loc=mean, scale=stdev) for i in s])
+        self.return_sims =  transformed_sims

@@ -12,21 +12,15 @@ def main():
                    'non_taxable_contribution' : 21500,
                    'taxable_contribution' : 12500,
                    'monthly_retirement_expenses': 4200,
+                   'retirement_age' : 65,
+                   'expected_rate_of_return' : 0.07,
+                   'asset_volatility' : 0.15,
+                   'inflation_rate' : 0.035,
                    }
     r = retCalc(sample_dict)
     x = r.plan_dict
-    #for p in x:
-    #    print p
     r.plan_dict[0].print_path()
-    #s = r.simdata.return_sims[0]
-    #p = pathOnPortfolio(sample_dict, s)
-    #print p.end_balance
-    #x = r.run_all_sims()
-    #print r.get_final_balance(r.plan_dict[0])
-    #print type(r.plan_dict)
-    #r.set_params(sample_dict)
-    #s = simData(0.07, 0.12, 52)
-    #print s.return_sims
+
     
 
 if __name__ == '__main__':
