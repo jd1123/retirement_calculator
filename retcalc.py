@@ -98,53 +98,58 @@ class pathOnPortfolio():
         plan_dict[self.now]['non_taxable_contribution'] = self.non_taxable_contribution
         
         for i in range(1,self.years):
+            year = self.now + i
+            last_year_dict = plan_dict[year-1]
             
             age = self.age + i
             SOY_taxable_balance = last_year_dict['EOY_taxable_balance']
             SOY_non_taxable_balance = last_year_dict['EOY_taxable_balance']
-            
             rate_of_return = self.sim[i]
-            year = self.now + i
-            last_year_dict = plan_dict[year-1]
             
-            if self.age + i > self.retirement_age:
+            if age > self.retirement_age:
                 expenses = self.monthly_retirement_expenses * 12 * (1+self.inflation_rate)**i
             else:
                 expenses = 0
             
-            plan_dict[year] = {'age' : self.age + i,
-             'SOY_taxable_balance': last_year_dict['EOY_taxable_balance'],
-             'SOY_non_taxable_balance' : last_year_dict['EOY_non_taxable_balance'],
-             'yearly_expenses' : expenses,
-             'return' : rate_of_return,
-             'non_taxable_contribution' : self.non_taxable_contribution,
-             'taxable_contribution' : self.taxable_contribution
-            }
             
             taxable_contrib = 0
             non_taxable_contrib = 0
             
-            if plan_dict[year]['age'] <= self.retirement_age:
-                taxable_contrib = self.taxable_contribution
-                plan_dict[year]['taxable_contribution'] = taxable_contrib
+            if age <= self.retirement_age:
+                taxable_contrib = self.taxable_contribution                
                 non_taxable_contrib = self.non_taxable_contribution
-                plan_dict[year]['non_taxable_contribution'] = non_taxable_contrib
             else:
-                plan_dict[year]['non_taxable_contribution'] = 0
-                plan_dict[year]['taxable_contribution'] = 0
+                taxable_contrib = 0
+                non_taxable_contrib = 0
                 
             
-            if plan_dict[year]['SOY_taxable_balance'] >= 0:
-                plan_dict[year]['EOY_taxable_balance'] = plan_dict[year]['SOY_taxable_balance'] + plan_dict[year]['SOY_taxable_balance']*(rate_of_return)*(1-self.returns_tax_rate) + taxable_contrib
+            if SOY_taxable_balance >= 0:
+                taxable_returns = SOY_taxable_balance*(rate_of_return)*(1-self.returns_tax_rate)
+                EOY_taxable_balance = SOY_taxable_balance + taxable_returns + taxable_contrib
             
-            if plan_dict[year]['SOY_non_taxable_balance'] >= 0:
-                plan_dict[year]['EOY_non_taxable_balance'] = plan_dict[year]['SOY_non_taxable_balance']*(1+rate_of_return) + non_taxable_contrib
+            if SOY_non_taxable_balance >= 0:
+                non_taxable_returns = (1+rate_of_return)
+                EOY_non_taxable_balance = SOY_non_taxable_balance*(1+rate_of_return) + non_taxable_contrib
+            
             else:
-                #this is defitely wrong
-                plan_dict[year]['EOY_non_taxable_balance']=0
+                EOY_non_taxable_balance=0
             
             if expenses > 0:
-                plan_dict[year]['EOY_non_taxable_balance']-=expenses/self.effective_tax_rate
+                EOY_non_taxable_balance-=expenses/self.effective_tax_rate
+        
+            plan_dict[year] = {'age' : self.age + i,
+             'SOY_taxable_balance': SOY_taxable_balance,
+             'SOY_non_taxable_balance' : SOY_non_taxable_balance,
+             'yearly_expenses' : expenses,
+             'return' : rate_of_return,
+             'non_taxable_contribution' : non_taxable_contrib,
+             'taxable_contribution' : taxable_contrib,
+             'EOY_taxable_balance' : EOY_taxable_balance,
+             'EOY_non_taxable_balance' : EOY_non_taxable_balance,
+             'taxable_returns' : taxable_returns,
+             'non_taxable_returns' : non_taxable_returns,
+            }
+            
         
         return plan_dict
     
