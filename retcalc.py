@@ -3,28 +3,11 @@ from scipy.stats import norm
 import datetime
 import random
 
+### TODO
+# I need to refactor this code. It is stupid. do the calcs,
+# then create the dict. Don't use the dict directly
+
 class retCalc():
-    def old(self):
-        self.age = None
-        self.retirement_age = None
-        self.terminal_age = None
-        self.non_taxable_balance = None
-        self.taxable_balance = None
-        self.effective_tax_rate = 0.3
-        self.returns_tax_rate = 0.15
-        self.non_taxable_contribution = 17500
-        self.taxable_contribution = 0
-        self.yearly_retirement_expenses = None
-        self.now = datetime.datetime.now().year
-        self.years = 0
-        #years = self.retirement_age - self.age + 1
-        
-        
-        self.expected_rate_of_return = 0.07
-        self.asset_volatility = 0.13
-        self.inflation_rate = 0.035
-        
-        
     def __init__(self, param_dict): 
         try:
             self.age = param_dict['age']
@@ -38,6 +21,7 @@ class retCalc():
             self.taxable_contribution = param_dict['taxable_contribution']
             self.monthly_retirement_expenses = param_dict['monthly_retirement_expenses']
             self.years = self.terminal_age - self.age
+            self.param_dict = param_dict
             
         except KeyError as e:
             print e
@@ -48,56 +32,128 @@ class retCalc():
         self.asset_volatility = 0.13
         self.inflation_rate = 0.035
         self.simdata = simData(self.expected_rate_of_return, self.asset_volatility, self.years)
-        self.plan_dict = self.run_calc_on_sim(self.simdata.return_sims[0])
+        self.plan_dict = self.run_all_sims()
         
     
-    #format for a year:
-    # dict of dicts ->
-    # plan[year] -> year_dict -> year_dict
-    def run_calc_on_sim(self, sim):
+    def get_final_balance(self, path):
+        key = max(path.keys())
+        return path[key]['EOY_taxable_balance'] + path[key]['EOY_non_taxable_balance']
+    
+    def run_all_sims(self):
+        all_paths = []
+        for sim in self.simdata.return_sims:
+            path = pathOnPortfolio(self.param_dict, sim)
+            all_paths.append(path)
+        return all_paths
+    
+
+
+#each path will be an object with an associated sim
+class pathOnPortfolio():
+    def __init__(self, param_dict, sim):
+        self.age = param_dict['age']
+        self.retirement_age = param_dict['retirement_age']
+        self.terminal_age = param_dict['terminal_age']
+        self.non_taxable_balance = param_dict['non_taxable_balance']
+        self.taxable_balance = param_dict['taxable_balance']
+        self.effective_tax_rate = param_dict['eff_tax_rate']
+        self.returns_tax_rate = param_dict['returns_tax_rate']
+        self.non_taxable_contribution = param_dict['non_taxable_contribution']
+        self.taxable_contribution = param_dict['taxable_contribution']
+        self.monthly_retirement_expenses = param_dict['monthly_retirement_expenses']
+        self.years = self.terminal_age - self.age
+        self.sim = sim
+        
+        self.now = datetime.datetime.now().year
+        self.retirement_age = 65
+        self.expected_rate_of_return = 0.07
+        self.asset_volatility = 0.13
+        self.inflation_rate = 0.035
+        #self.simdata = simData(self.expected_rate_of_return, self.asset_volatility, self.years)
+        #self.plan_dict = self.run_all_sims()
+        self.path_dict = self.run_calc()
+        self.end_balance = self.get_final_balance()
+    
+    def __repr__(self):
+        return str(int(self.end_balance)) + " " + str(sum(self.sim)/float(len(self.sim)))
+        
+    def path_to_dict(self):
+        pass
+    
+    def get_final_balance(self):
+        key = max(self.path_dict.keys())
+        return self.path_dict[key]['EOY_taxable_balance'] + self.path_dict[key]['EOY_non_taxable_balance']
+    
+    def run_calc(self):
         plan_dict = {}
-        p = plan_dict[self.now]
-        p = {'age' : self.age,
+        plan_dict[self.now] = {'age' : self.age,
              'SOY_taxable_balance': self.taxable_balance,
              'SOY_non_taxable_balance' : self.non_taxable_balance,
              'yearly_expenses' : 0,
+             'return' : self.sim[0]
              }
-        p['EOY_taxable_balance'] = p['SOY_taxable_balance']*(1+sim[0])*(1-self.returns_tax_rate) + self.taxable_contribution
-        p['EOY_non_taxable_balance'] = p['SOY_non_taxable_balance']*(1+sim[0]) + self.non_taxable_contribution  
+        plan_dict[self.now]['EOY_taxable_balance'] = plan_dict[self.now]['SOY_taxable_balance']*(1+self.sim[0])*(1-self.returns_tax_rate) + self.taxable_contribution
+        plan_dict[self.now]['EOY_non_taxable_balance'] = plan_dict[self.now]['SOY_non_taxable_balance']*(1+self.sim[0]) + self.non_taxable_contribution  
+        plan_dict[self.now]['taxable_contribution'] = self.taxable_contribution
+        plan_dict[self.now]['non_taxable_contribution'] = self.non_taxable_contribution
         
         for i in range(1,self.years):
             
-            rate_of_return = sim[i]
+            age = self.age + i
+            SOY_taxable_balance = last_year_dict['EOY_taxable_balance']
+            SOY_non_taxable_balance = last_year_dict['EOY_taxable_balance']
+            
+            rate_of_return = self.sim[i]
             year = self.now + i
-            last_year_dict = plandict[year-1]
+            last_year_dict = plan_dict[year-1]
             
             if self.age + i > self.retirement_age:
-                expenses = self.monthly_retirement_expenses * 12
+                expenses = self.monthly_retirement_expenses * 12 * (1+self.inflation_rate)**i
             else:
                 expenses = 0
             
             plan_dict[year] = {'age' : self.age + i,
              'SOY_taxable_balance': last_year_dict['EOY_taxable_balance'],
-             'SOY_non_taxable_balance' : last_year_dict['non_taxable_balance'],
+             'SOY_non_taxable_balance' : last_year_dict['EOY_non_taxable_balance'],
              'yearly_expenses' : expenses,
+             'return' : rate_of_return,
+             'non_taxable_contribution' : self.non_taxable_contribution,
+             'taxable_contribution' : self.taxable_contribution
             }
             
             taxable_contrib = 0
             non_taxable_contrib = 0
+            
             if plan_dict[year]['age'] <= self.retirement_age:
                 taxable_contrib = self.taxable_contribution
+                plan_dict[year]['taxable_contribution'] = taxable_contrib
                 non_taxable_contrib = self.non_taxable_contribution
+                plan_dict[year]['non_taxable_contribution'] = non_taxable_contrib
+            else:
+                plan_dict[year]['non_taxable_contribution'] = 0
+                plan_dict[year]['taxable_contribution'] = 0
+                
             
             if plan_dict[year]['SOY_taxable_balance'] >= 0:
-                plan_dict[year]['EOY_taxable_balance'] = plan_dict[year]['SOY_taxable_balance']*(1+rate_of_return)*(1-self.returns_tax_rate) + taxable_contrib
+                plan_dict[year]['EOY_taxable_balance'] = plan_dict[year]['SOY_taxable_balance'] + plan_dict[year]['SOY_taxable_balance']*(rate_of_return)*(1-self.returns_tax_rate) + taxable_contrib
             
             if plan_dict[year]['SOY_non_taxable_balance'] >= 0:
                 plan_dict[year]['EOY_non_taxable_balance'] = plan_dict[year]['SOY_non_taxable_balance']*(1+rate_of_return) + non_taxable_contrib
+            else:
+                #this is defitely wrong
+                plan_dict[year]['EOY_non_taxable_balance']=0
             
             if expenses > 0:
                 plan_dict[year]['EOY_non_taxable_balance']-=expenses/self.effective_tax_rate
         
         return plan_dict
+    
+    def print_path(self):
+        for k in sorted(self.path_dict.keys()):
+            print str(k) + " : " + str(self.path_dict[k]['SOY_non_taxable_balance']) + " : " + str(self.path_dict[k]['non_taxable_contribution']) + " : " + str(self.path_dict[k]['EOY_non_taxable_balance'])
+        
+        #for k,v in self.path_dict.iteritems():
+         #   print str(k) + " : " + str(v['SOY_non_taxable_balance']) + " : " + str(v['non_taxable_contribution']) + " : " + str(v['EOY_non_taxable_balance'])
 
 ## This generatres the random data to run the statistical analysis on your portfolio
 class simData():
@@ -106,8 +162,9 @@ class simData():
         self.stdev = stdev
         self.vec_size = vec_size
         self.n = n
-        self.raw_sims = self.get_simulations()
-        self.return_sims = self.transform_sim_data(self.raw_sims)
+        (x,y) = self.get_simulations()
+        self.raw_sims = x
+        self.return_sims = y
     
     # Im pretty sure these can be class methods but i dont know how to do them
     # One simulation of size vec_size
@@ -120,14 +177,14 @@ class simData():
     # n simulations
     def get_simulations(self):
         sims = []
+        full_sims = []
         for i in range(self.n):
-            sims.append(self.simulation())
-        return sims
+            s = self.simulation()
+            sims.append(s)
+            full_sims.append(norm.ppf(s,loc=self.mean, scale=self.stdev))
+        return (sims, full_sims)
     
-    #will transform the raw uniform dist into
-    #normal with mean self.mean and stdev self.stdev
-    #this will allow for changing parameters without rerunning the random
-    #generator - NEED SCIPY for scipy.stats.norm.ppf()
+    #this function runs REALLY slowly - i dont know why.
     def transform_sim_data(self, sims):
         transformed_sims = []
         for s in sims:
