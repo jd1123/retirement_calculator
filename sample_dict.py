@@ -19,8 +19,10 @@ def main():
                    }
     r = retCalc(sample_dict)
     x = r.plan_dict
-    r.plan_dict[0].print_path()
-
+    r.confidence_path()
+    r.confidence_path(0.01)
+    #r.plan_dict[0].print_path()
+    #r.sort_paths()
     
 
 if __name__ == '__main__':

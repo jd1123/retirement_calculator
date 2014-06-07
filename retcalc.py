@@ -39,14 +39,19 @@ class retCalc():
         key = max(path.keys())
         return path[key]['EOY_taxable_balance'] + path[key]['EOY_non_taxable_balance']
     
+    # runs all the sims and returns a list of paths sorted by end balance
     def run_all_sims(self):
         all_paths = []
         for sim in self.simdata.return_sims:
             path = pathOnPortfolio(self.param_dict, sim)
             all_paths.append(path)
+        all_paths.sort(key=lambda x: x.end_balance)
         return all_paths
     
-
+    def confidence_path(self, confidence = 0.1):
+        n_path = int(confidence * len(self.plan_dict))
+        self.plan_dict[n_path].print_path()
+        return self.plan_dict[n_path]
 
 #each path will be an object with an associated sim
 class pathOnPortfolio():
@@ -104,7 +109,7 @@ class pathOnPortfolio():
             
             age = self.age + i
             SOY_taxable_balance = last_year_dict['EOY_taxable_balance']
-            SOY_non_taxable_balance = last_year_dict['EOY_taxable_balance']
+            SOY_non_taxable_balance = last_year_dict['EOY_non_taxable_balance']
             rate_of_return = self.sim[i]
             
             if age > self.retirement_age:
@@ -152,19 +157,20 @@ class pathOnPortfolio():
              'non_taxable_returns' : non_taxable_returns,
             }
             
-        
         return plan_dict
     
     def print_path(self):
+        print "Average return :" + str(numpy.mean(self.sim))
+        print "year : return : SOY_balance : contribution : expenses : EOY_balance "
         for k in sorted(self.path_dict.keys()):
-            print str(k) + " : " + str(self.path_dict[k]['SOY_non_taxable_balance']) + " : " + str(self.path_dict[k]['non_taxable_contribution']) + " : " + str(self.path_dict[k]['EOY_non_taxable_balance'])
+            print str(k) + " : " + str(self.path_dict[k]['return']) + " : " + str(int(self.path_dict[k]['SOY_non_taxable_balance'])) + " : " + str(self.path_dict[k]['non_taxable_contribution']) + " : " + str(int(self.path_dict[k]['yearly_expenses'])) + " : " + str(int(self.path_dict[k]['EOY_non_taxable_balance']))
         
         #for k,v in self.path_dict.iteritems():
          #   print str(k) + " : " + str(v['SOY_non_taxable_balance']) + " : " + str(v['non_taxable_contribution']) + " : " + str(v['EOY_non_taxable_balance'])
 
 ## This generatres the random data to run the statistical analysis on your portfolio
 class simData():
-    def __init__(self, mean, stdev, vec_size, n=1000):
+    def __init__(self, mean, stdev, vec_size, n=2500):
         self.mean = mean
         self.stdev = stdev
         self.vec_size = vec_size
