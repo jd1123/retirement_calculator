@@ -19,7 +19,7 @@ def main():
                    }
     r = retCalc(sample_dict)
     x = r.plan_dict
-    r.confidence_path(0.2)
+    r.plot_confidence(0.2)
     #r.confidence_path(0.01)
     #for i in range(len(r.plan_dict)):
     #    print "i : " + str(i) + " short : " + r.plan_dict[i].short() 

@@ -1,6 +1,7 @@
 import datetime
 from simulations import simData
 from paths import pathOnPortfolio
+import matplotlib.pyplot as plt
 
 ### TODO
 # I need to refactor this code. It is stupid. do the calcs,
@@ -50,3 +51,11 @@ class retCalc():
         n_path = int(confidence * len(self.plan_dict))
         self.plan_dict[n_path].print_path()
         return self.plan_dict[n_path]
+    
+    def plot_confidence(self, confidence = 0.1):
+        n_path = int(confidence * len(self.plan_dict))
+        path = self.plan_dict[n_path].path_dict
+        X = sorted([int(k) for k in path.keys()])
+        Y = [path[k]['EOY_balance'] for k in X]
+        plt.plot(X,Y)
+        plt.savefig('balance.png')
