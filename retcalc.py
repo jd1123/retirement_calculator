@@ -52,10 +52,23 @@ class retCalc():
         self.plan_dict[n_path].print_path()
         return self.plan_dict[n_path]
     
-    def plot_confidence(self, confidence = 0.1):
+    def get_confidence_path(self, confidence = 0.1):
         n_path = int(confidence * len(self.plan_dict))
         path = self.plan_dict[n_path].path_dict
-        X = sorted([int(k) for k in path.keys()])
-        Y = [path[k]['EOY_balance'] for k in X]
-        plt.plot(X,Y)
+        years = sorted([int(k) for k in path.keys()])
+        balances = [path[k]['EOY_balance'] for k in years]
+        ages = [path[k]['age'] for k in years]
+        flows = [(-path[k]['yearly_expenses'] + path[k]['non_taxable_contribution'] + path[k]['taxable_contribution']) for k in years]
+        #plt.plot(years, flows)
+        #plt.savefig('balance.png')
+        return (years, ages, balances, flows)
+    
+    def plot_confidence(self, confidence = 0.1, x_axis = 'years'):
+        (years, ages, balances, flows) = self.get_confidence_path(confidence)
+        if (x_axis == 'years'):
+            plt.plot(years, balances)
+        else:
+            plt.plot(ages, balances)
+            
+            
         plt.savefig('balance.png')

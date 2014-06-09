@@ -11,7 +11,7 @@ def main():
                    'returns_tax_rate' : 0.3,
                    'non_taxable_contribution' : 21500,
                    'taxable_contribution' : 0,
-                   'monthly_retirement_expenses': 3200,
+                   'monthly_retirement_expenses': 4200,
                    'retirement_age' : 65,
                    'expected_rate_of_return' : 0.07,
                    'asset_volatility' : 0.15,

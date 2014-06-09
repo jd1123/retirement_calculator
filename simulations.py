@@ -3,7 +3,7 @@ from scipy.stats import norm
 
 ## This generatres the random data to run the statistical analysis on your portfolio
 class simData():
-    def __init__(self, mean, stdev, vec_size, n=2500):
+    def __init__(self, mean, stdev, vec_size, n=5000):
         self.mean = mean
         self.stdev = stdev
         self.vec_size = vec_size

@@ -14,7 +14,7 @@ class pathOnPortfolio():
         self.non_taxable_contribution = param_dict['non_taxable_contribution']
         self.taxable_contribution = param_dict['taxable_contribution']
         self.monthly_retirement_expenses = param_dict['monthly_retirement_expenses']
-        self.years = self.terminal_age - self.age
+        self.years = self.terminal_age - self.age + 1
         self.sim = sim
         
         self.now = datetime.datetime.now().year
