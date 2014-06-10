@@ -1,9 +1,10 @@
 import datetime
 import numpy
+from simulations import simulation
 
 #each path will be an object with an associated sim
 class pathOnPortfolio():
-    def __init__(self, param_dict, sim):
+    def __init__(self, param_dict):
         self.age = param_dict['age']
         self.retirement_age = param_dict['retirement_age']
         self.terminal_age = param_dict['terminal_age']
@@ -15,7 +16,7 @@ class pathOnPortfolio():
         self.taxable_contribution = param_dict['taxable_contribution']
         self.monthly_retirement_expenses = param_dict['monthly_retirement_expenses']
         self.years = self.terminal_age - self.age + 1
-        self.sim = sim
+        
         
         self.now = datetime.datetime.now().year
         self.retirement_age = param_dict['retirement_age']
@@ -24,6 +25,7 @@ class pathOnPortfolio():
         self.inflation_rate = param_dict['inflation_rate']
         #self.simdata = simData(self.expected_rate_of_return, self.asset_volatility, self.years)
         #self.plan_dict = self.run_all_sims()
+        self.sim = simulation(self.years, self.expected_rate_of_return, self.asset_volatility)
         self.path_dict = self.run_calc()
         self.end_balance = self.get_final_balance()
     
@@ -91,7 +93,11 @@ class pathOnPortfolio():
                 expenses = 0            
             
             if expenses > 0:
-                EOY_non_taxable_balance-=expenses/(1-self.effective_tax_rate)
+                if expenses > EOY_non_taxable_balance:
+                    excess_expense = expenses - EOY_non_taxable_balance/(1-self.effective_tax_rate)
+                    EOY_taxable_balance -= excess_expense
+                else:
+                    EOY_non_taxable_balance-=expenses/(1-self.effective_tax_rate)
         
             plan_dict[year] = {'age' : self.age + i,
              'SOY_taxable_balance': SOY_taxable_balance,
@@ -120,3 +126,7 @@ class pathOnPortfolio():
     
     def short(self):
         return "End Balance : " + str(self.end_balance) + " Average return : " + str(numpy.mean(self.sim))
+    
+    def print_sim(self):
+        for i in range(len(self.sim)):
+            print self.sim[i]

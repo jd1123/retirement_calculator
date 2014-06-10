@@ -1,5 +1,5 @@
 import datetime
-from simulations import simData
+import numpy
 from paths import pathOnPortfolio
 import matplotlib.pyplot as plt
 
@@ -30,7 +30,8 @@ class retCalc():
         self.expected_rate_of_return = 0.07
         self.asset_volatility = 0.13
         self.inflation_rate = 0.035
-        self.simdata = simData(self.expected_rate_of_return, self.asset_volatility, self.years)
+        #self.simdata = simData(self.expected_rate_of_return, self.asset_volatility, self.years)
+        self.n = 7500
         self.plan_dict = self.run_all_sims()
         
     
@@ -41,8 +42,8 @@ class retCalc():
     # runs all the sims and returns a list of paths sorted by end balance
     def run_all_sims(self):
         all_paths = []
-        for sim in self.simdata.return_sims:
-            path = pathOnPortfolio(self.param_dict, sim)
+        for i in range(self.n):
+            path = pathOnPortfolio(self.param_dict)
             all_paths.append(path)
         all_paths.sort(key=lambda x: x.end_balance)
         return all_paths
@@ -69,6 +70,26 @@ class retCalc():
             plt.plot(years, balances)
         else:
             plt.plot(ages, balances)
-            
-            
         plt.savefig('balance.png')
+        
+    def plot_bar(self, confidence=0.1):
+        (years, ages, balances, flows) = self.get_confidence_path(confidence)
+        fig = plt.figure()
+        ax1 = plt.subplot()
+        ax1.bar(ages, flows, width=1)
+        
+        ax2 = ax1.twinx()
+        #ax2 = plt.subplot(111)
+        ax2.plot(ages, balances, color='black')
+        
+        plt.savefig('flows.png')
+        
+    def histo(self):
+        end_balances = [self.plan_dict[i].end_balance for i in range(len(self.plan_dict))]
+        hist = numpy.histogram(end_balances, bins=350)
+        print "num\t\tCum Prob\t\tEnd Balance"
+        t = 0
+        for i in range(len(hist[0])):
+            t += hist[0][i]
+            print str(t) + "\t\t" + str(float(t)/float(self.n))+ "\t\t" + str(hist[1][i])
+        
