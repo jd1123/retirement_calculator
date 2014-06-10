@@ -31,7 +31,7 @@ class retCalc():
         self.asset_volatility = 0.13
         self.inflation_rate = 0.035
         #self.simdata = simData(self.expected_rate_of_return, self.asset_volatility, self.years)
-        self.n = 7500
+        self.n = 5000
         self.plan_dict = self.run_all_sims()
         
     
@@ -91,5 +91,11 @@ class retCalc():
         t = 0
         for i in range(len(hist[0])):
             t += hist[0][i]
-            print str(t) + "\t\t" + str(float(t)/float(self.n))+ "\t\t" + str(hist[1][i])
+            print str(hist[0][i]) + "\t\t" + str(float(t)/float(self.n))+ "\t\t" + str(hist[1][i])
         
+        bins = [-20000000+1000000*i for i in range(41)]
+        # the histogram of the data
+        num_bins = 30
+        plt.hist(end_balances, bins=bins, normed=False, facecolor='green', alpha=0.5)
+        
+        plt.savefig('histo.png')

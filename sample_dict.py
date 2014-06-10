@@ -9,7 +9,7 @@ s = {'age': 22,
                    'eff_tax_rate' : 0.2,
                    'returns_tax_rate' : 0.3,
                    'non_taxable_contribution' : 17500,
-                   'taxable_contribution' : 2000,
+                   'taxable_contribution' : 0,
                    'monthly_retirement_expenses': 4200,
                    'retirement_age' : 65,
                    'expected_rate_of_return' : 0.07,
@@ -36,7 +36,7 @@ def main():
                    }
     r = retCalc(sample_dict)
     x = r.plan_dict
-    r.plot_bar(0.05)
+    #r.plot_bar(0.05)
     r.histo()
     #r.confidence_path(0.01)
     #for i in range(len(r.plan_dict)):
